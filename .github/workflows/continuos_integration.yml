@@ -35,5 +35,8 @@ jobs:
           java-version: 17
           cache: 'maven'
 
+      - name: Start DB for test
+        run: docker compose up -d
+
       - name: Unit Tests
         run: mvn test
