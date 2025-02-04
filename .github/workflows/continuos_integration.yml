@@ -51,8 +51,10 @@ jobs:
           java-version: 17
           cache: 'maven'
 
-      - name: Start DB for test
-        run: docker compose up -d
-
-      - name: Unit Tests
-        run: mvn test
+      - name: Build and Run Tests
+        run: |
+          ./mvn clean test
+        env:
+          SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/authentication_management
+          SPRING_DATASOURCE_USERNAME: pugliese
+          SPRING_DATASOURCE_PASSWORD: pugliese
