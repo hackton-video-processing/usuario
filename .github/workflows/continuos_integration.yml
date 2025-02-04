@@ -52,8 +52,7 @@ jobs:
           cache: 'maven'
 
       - name: Build and Run Tests
-        run: |
-          ./mvn clean test
+        run: mvn clean test
         env:
           SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/authentication_management
           SPRING_DATASOURCE_USERNAME: pugliese
