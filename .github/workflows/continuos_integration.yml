@@ -27,6 +27,22 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: maven:3.8.7-openjdk-18-slim
+
+    services:
+      postgres:
+        image: postgres:15  # Use the version you need
+        env:
+          POSTGRES_USER: pugliese
+          POSTGRES_PASSWORD: pugliese
+          POSTGRES_DB: authentication_management
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U test_user"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5  
+
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
