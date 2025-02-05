@@ -5,6 +5,7 @@ services:
     environment:
       POSTGRES_USER: pugliese
       POSTGRES_PASSWORD: pugliese
+      POSTGRES_DB: authentication_management
       PGDATA: /data/postgres
     volumes:
       - postgres:/data/postgres

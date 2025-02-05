@@ -1,0 +1,164 @@
+name: Maven Package
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-app:
+    runs-on: ubuntu-latest
+    container:
+      image: maven:3.8.7-openjdk-18-slim
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: 17
+          distribution: 'zulu'
+          cache: 'maven'
+
+      - name: Build with Maven
+        run: mvn clean package -DskipTests=true
+
+  test:
+    needs: build-app
+    runs-on: ubuntu-latest
+    container:
+      image: maven:3.8.7-openjdk-18-slim
+
+    #services:
+    #  postgres:
+    #    image: postgres:15  # Use the version you need
+    #    env:
+    #      POSTGRES_USER: pugliese
+    #      POSTGRES_PASSWORD: pugliese
+    #      POSTGRES_DB: authentication_management
+    #    ports:
+    #      - 5432:5432
+    #    options: >-
+    #      --health-cmd="pg_isready -U test_user"
+    #      --health-interval=10s
+    #      --health-timeout=5s
+    #      --health-retries=5
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: 17
+          cache: 'maven'
+
+      #- name: Install Docker Compose
+      #  run: |
+      #    sudo apt-get update
+      #    sudo apt-get install -y docker-compose
+#
+      #- name: Start Database
+      #  run: docker-compose up -d
+#
+      #- name: Wait for PostgreSQL
+      #  run: |
+      #    for i in {1..10}; do
+      #      nc -z localhost 5432 && echo "Postgres is up" && exit 0
+      #      echo "Waiting for Postgres..."
+      #      sleep 3
+      #    done
+      #    echo "Postgres did not start in time" && exit 1
+
+      - name: Build and Run Tests
+        run: mvn clean test
+      #  env:
+      #    SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/authentication_management
+      #    SPRING_DATASOURCE_USERNAME: pugliese
+      #    SPRING_DATASOURCE_PASSWORD: pugliese
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    steps:
+      # Step 1: Fazer o checkout do repositório
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      # Step 2: Configurar credenciais da AWS
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      # Step 3: Criar repositório ECS caso não exista
+      - name: Create ECR Repository if not exists
+        run: |
+          aws ecr describe-repositories --repository-names ${{ secrets.ECR_REPOSITORY }} --region ${{ secrets.AWS_REGION }} || \
+          aws ecr create-repository --repository-name ${{ secrets.ECR_REPOSITORY }} --region ${{ secrets.AWS_REGION }}
+
+      # Step 4: Fazer login no repositório ECR
+      - name: Log in to Amazon ECR
+        run: |
+          aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
+
+      # Step 5: Fazer build da imagem da aplicação Java (baseado no Dockerfile do projeto)
+      - name: Build Docker image
+        run: |
+          docker build -t notification-hackaton .
+          docker tag notification-hackaton:latest ${{ secrets.ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:latest
+
+      # Step 6: Fazer push da imagem criada para o repositório ECS
+      - name: Push Docker image to Amazon ECR
+        run: |
+          docker push ${{ secrets.ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:latest
+
+      # Step 7: Fazer deploy na EC2
+      - name: Configurar SSH e Deploy na EC2
+        run: |
+          echo "${{ secrets.EC2_SSH_PRIVATE_KEY }}" > private_key.pem
+          chmod 600 private_key.pem
+          
+          ssh -o StrictHostKeyChecking=no -i private_key.pem ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
+          
+            # Instalar Docker caso não esteja presente
+            sudo yum install docker -y
+            sudo systemctl start docker
+            sudo systemctl enable docker
+          
+             # Instalar AWS CLI, se necessário
+            if ! command -v aws &> /dev/null; then
+              sudo yum install -y aws-cli
+            fi
+          
+            # Adicionar o usuário ao grupo Docker (requer logout/login para surtir efeito)
+            sudo usermod -aG docker $USER
+          
+            newgrp docker
+          
+            # Configurar credenciais manualmente
+            aws configure set aws_access_key_id "${{ secrets.AWS_ACCESS_KEY_ID }}"
+            aws configure set aws_secret_access_key "${{ secrets.AWS_SECRET_ACCESS_KEY }}"
+            aws configure set region "${{ secrets.AWS_REGION }}"
+          
+            # Fazer login no ECR
+            aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.ACCOUNT_ID  }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
+          
+            # Parar e remover containers antigos
+           docker ps -q --filter "name=meu-container" | grep -q . && docker stop meu-container && docker rm meu-container || echo "Container não encontrado."
+          
+            # Fazer pull da imagem do ECR
+           docker pull ${{ secrets.ACCOUNT_ID  }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:latest
+          
+            # Executar novo container com variáveis passadas diretamente
+           docker run -d --name meu-container \
+            -e AWS_REGION="${{ secrets.AWS_REGION }}" \
+            -e AWS_ACCESS_KEY_ID="${{ secrets.AWS_ACCESS_KEY_ID }}" \
+            -e AWS_SECRET_ACCESS_KEY="${{ secrets.AWS_SECRET_ACCESS_KEY }}" \
+            -e SPRING_DATASOURCE_USERNAME="${{ secrets.DATA_SOURCE_USERNAME }}" \
+            -e SPRING_DATASOURCE_PASSWORD="${{ secrets.DATA_SOURCE_PASSWORD }}" \
+            -e SPRING_DATASOURCE_URL="${{ secrets.DATA_SOURCE_URL }}" \
+            -p 80:8080 \
+            ${{ secrets.ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:latest
+          EOF
