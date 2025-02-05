@@ -104,8 +104,8 @@ jobs:
       # Step 5: Fazer build da imagem da aplicação Java (baseado no Dockerfile do projeto)
       - name: Build Docker image
         run: |
-          docker build -t notification-hackaton .
-          docker tag notification-hackaton:latest ${{ secrets.ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:latest
+          docker build -t authentication-manager .
+          docker tag authentication-manager:latest ${{ secrets.ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:latest
 
       # Step 6: Fazer push da imagem criada para o repositório ECS
       - name: Push Docker image to Amazon ECR
