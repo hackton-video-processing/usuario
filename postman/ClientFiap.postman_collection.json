@@ -1,0 +1,143 @@
+{
+	"info": {
+		"_postman_id": "d3b4929e-8dab-4d15-9f48-582b75e903ec",
+		"name": "ClientFiap",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "19542640"
+	},
+	"item": [
+		{
+			"name": "AWS - register",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{ \n\"firstname\":\"Joao\",\n\"lastname\":\"Barros\",\n\"cpf\":\"12345678905\",\n\"email\":\"email@gmail.com\",\n\"password\":\"password1\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://52.23.164.113:80/api/v1/auth/register",
+					"protocol": "http",
+					"host": [
+						"52",
+						"23",
+						"164",
+						"113"
+					],
+					"port": "80",
+					"path": [
+						"api",
+						"v1",
+						"auth",
+						"register"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "AWS - introspection",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{ \n\"token\":\"eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJlbWFpbDQiLCJpYXQiOjE3MzkwNjMwNzEsImV4cCI6MTczOTA2NDUxMX0._7NBzNj9WW3EMka5T9GrrC-w2bAJDT_z42RyaHbL8nA\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://52.23.164.113:80/api/v1/auth/validate",
+					"protocol": "http",
+					"host": [
+						"52",
+						"23",
+						"164",
+						"113"
+					],
+					"port": "80",
+					"path": [
+						"api",
+						"v1",
+						"auth",
+						"validate"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "AWS - authenticate",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{ \n\"email\":\"email@gmail.com\",\n\"password\":\"password1\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://52.23.164.113:80/api/v1/auth/authenticate",
+					"protocol": "http",
+					"host": [
+						"52",
+						"23",
+						"164",
+						"113"
+					],
+					"port": "80",
+					"path": [
+						"api",
+						"v1",
+						"auth",
+						"authenticate"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Local - register",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{ \n\"firstname\":\"Lucas\",\n\"lastname\":\"Barros\",\n\"cpf\":\"12345678901\",\n\"email\":\"email\",\n\"password\":\"password\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8080/api/v1/auth/register",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"api",
+						"v1",
+						"auth",
+						"register"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
