@@ -1,22 +1,21 @@
-# Hackaton - Sistema de Upload e Download
+# Hackaton - MicroService responsible for authenticate and authorization
 
-O sistema tem como intuito orquestrar as chamadas do upload, processamento e download de um video.
-
-## Integrantes do Grupo
+## Development group
 - RM354032 - Alysson Gustavo Rodrigues Maciel
 - RM355969 - Vinicius Duarte Mendes Nepomuceno
 - RM354090 - Lucas Pugliese de Morais Barros
 - RM353273 - Felipe Pinheiro Dantas
 
-## Postman para realizar os testes
-Dentro do Projeto no diretório "postman" há um arquivo com uma collection postman com todas as rotas mapeadas para teste.
+## Postman to make the tests locally
+Inside of the project there is a postman's file with all the endpoints to make the local test 
+
 ```
 ./postman/ClientFiap.postman_collection.json
 ```
 
-## Realizar cadastro de client/usuario, autenticar e validar.
+## To register the new user.
 
-Para iniciar o registro do cliente segue abaixo o request:
+Request responsible to create a new user and return token in the response;
 
 ```url
 POST http://localhost:8080/api/v1/auth/register
@@ -30,7 +29,7 @@ POST http://localhost:8080/api/v1/auth/register
 }
 ```
 
-A resposta será o token com informações do cliente, data de expiração, claims e etc
+That is the response of the register endpoint with information of the client, expiration date of the token and others claims;
 
 ```url
 {
@@ -38,13 +37,17 @@ A resposta será o token com informações do cliente, data de expiração, clai
 }
 ```
 
-## Para realizar login 
+## Make login after the registration
 
 ```url
 POST http://localhost:8080/api/v1/auth/authenticate
+{ 
+    "email":"email@gmail.com",
+    "password":"password1"
+}
 ```
 
-O retorno da consulta de processamento será:
+Response of the login:
 
 ```url
 {
@@ -52,8 +55,11 @@ O retorno da consulta de processamento será:
 }
 ```
 
-## Para validação do token (Token Introspection)
+## To validate the token (Token Introspection)
 
 ```url
 POST http://localhost:8080/api/v1/auth/validate
+{
+    "token": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJlbWFpbEBnbWFpbC5jb20iLCJpYXQiOjE3MzkyMzY3MDIsImV4cCI6MTczOTIzODE0Mn0.eNnVctqXt71hZlF-5XUdPxZu_DwFoJ-Xu_l48i38ujE"
+}
 ```
